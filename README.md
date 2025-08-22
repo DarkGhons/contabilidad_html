@@ -184,7 +184,7 @@ const categories = ['food', 'transport', 'entertainment', ...];
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+Este proyecto está bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
 
 ## 📞 Soporte
 
