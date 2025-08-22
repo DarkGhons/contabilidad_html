@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS cuentas (
 );
 
 -- Initial data for cuentas
-INSERT INTO cuentas (cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa) VALUES
+INSERT OR IGNORE INTO cuentas (cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa) VALUES
 ('CTA_001','Banco de Chile','Cuenta Corriente','Banco de Chile','', 'CLP','SI'),
 ('CTA_002','Banco Estado','Cuenta RUT','Banco Estado','', 'CLP','SI'),
 ('CTA_003','Banco Falabella','Cuenta Corriente','Banco Falabella','', 'CLP','SI'),
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS contrapartes (
 );
 
 -- Initial data for contrapartes
-INSERT INTO contrapartes (contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas) VALUES
+INSERT OR IGNORE INTO contrapartes (contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas) VALUES
 ('CTR_001','Lorena Rojas','Personas','Deudor','',NULL),
 ('CTR_002','Dagoberto Godoy','Personas','Deudor','',NULL),
 ('CTR_003','Franco Godoy','Personas','Deudor','',NULL),
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS categorias (
 );
 
 -- Initial data for categorias
-INSERT INTO categorias (categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo) VALUES
+INSERT OR IGNORE INTO categorias (categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo) VALUES
 ('CAT_001','Ajuste','Ajuste contable','Ajustes/Otros','-'),
 ('CAT_002','Gasto','Otros gastos','Gastos variables','Otros'),
 ('CAT_003','Gasto','Alimentación','Gastos variables','Comida y bebidas'),
@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS instrumentos (
 );
 
 -- Initial data for instrumentos
-INSERT INTO instrumentos (instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones) VALUES
+INSERT OR IGNORE INTO instrumentos (instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones) VALUES
 ('INS_001','CMR Falabella','Tarjeta de Crédito','CMR Falabella',NULL,NULL,NULL,NULL,NULL,1250000,'CLP',NULL),
 ('INS_002','Banco de Chile Signature','Tarjeta de Crédito','Banco de Chile Signature',NULL,NULL,NULL,NULL,NULL,1000000,'CLP',NULL),
 ('INS_003','Cencosud Scotiabank','Tarjeta de Crédito','Cencosud Scotiabank',NULL,NULL,NULL,NULL,NULL,1520000,'CLP',NULL),

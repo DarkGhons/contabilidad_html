@@ -29,18 +29,32 @@ function handleAll(table, res) {
   });
 }
 
+function generateNextId(table, idField, prefix, cb) {
+  const start = prefix.length + 2;
+  const stmt = `SELECT ${idField} AS id FROM ${table} ORDER BY CAST(SUBSTR(${idField}, ${start}) AS INTEGER) DESC LIMIT 1`;
+  db.get(stmt, [], (err, row) => {
+    if (err) return cb(err);
+    const next = row && row.id ? parseInt(row.id.split('_')[1], 10) + 1 : 1;
+    const id = `${prefix}_${String(next).padStart(3, '0')}`;
+    cb(null, id);
+  });
+}
+
 // Cuentas
 app.get('/cuentas', (req, res) => handleAll('cuentas', res));
 
 app.post('/cuentas', (req, res) => {
-  const { cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa } = req.body;
-  const stmt = `INSERT INTO cuentas (cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-  db.run(stmt, [cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa], function(err) {
-    if (err) {
-      res.status(500).json({ error: 'Error inserting cuenta' });
-    } else {
-      res.json({ cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa });
-    }
+  const { cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa } = req.body;
+  generateNextId('cuentas', 'cuenta_id', 'CTA', (err, cuenta_id) => {
+    if (err) return res.status(500).json({ error: 'Error generating id' });
+    const stmt = `INSERT INTO cuentas (cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    db.run(stmt, [cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa], function(err2) {
+      if (err2) {
+        res.status(500).json({ error: 'Error inserting cuenta' });
+      } else {
+        res.json({ cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa });
+      }
+    });
   });
 });
 
@@ -58,14 +72,17 @@ app.delete('/cuentas/:id', (req, res) => {
 app.get('/contrapartes', (req, res) => handleAll('contrapartes', res));
 
 app.post('/contrapartes', (req, res) => {
-  const { contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas } = req.body;
-  const stmt = `INSERT INTO contrapartes (contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas) VALUES (?, ?, ?, ?, ?, ?)`;
-  db.run(stmt, [contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas], function(err) {
-    if (err) {
-      res.status(500).json({ error: 'Error inserting contraparte' });
-    } else {
-      res.json({ contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas });
-    }
+  const { contraparte_nombre, tipo, subtipo, activa, notas } = req.body;
+  generateNextId('contrapartes', 'contraparte_id', 'CTR', (err, contraparte_id) => {
+    if (err) return res.status(500).json({ error: 'Error generating id' });
+    const stmt = `INSERT INTO contrapartes (contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas) VALUES (?, ?, ?, ?, ?, ?)`;
+    db.run(stmt, [contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas], function(err2) {
+      if (err2) {
+        res.status(500).json({ error: 'Error inserting contraparte' });
+      } else {
+        res.json({ contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas });
+      }
+    });
   });
 });
 
@@ -83,14 +100,17 @@ app.delete('/contrapartes/:id', (req, res) => {
 app.get('/categorias', (req, res) => handleAll('categorias', res));
 
 app.post('/categorias', (req, res) => {
-  const { categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo } = req.body;
-  const stmt = `INSERT INTO categorias (categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo) VALUES (?, ?, ?, ?, ?)`;
-  db.run(stmt, [categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo], function(err) {
-    if (err) {
-      res.status(500).json({ error: 'Error inserting categoria' });
-    } else {
-      res.json({ categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo });
-    }
+  const { tipo_flujo, categoria_nombre, grupo, subgrupo } = req.body;
+  generateNextId('categorias', 'categoria_id', 'CAT', (err, categoria_id) => {
+    if (err) return res.status(500).json({ error: 'Error generating id' });
+    const stmt = `INSERT INTO categorias (categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo) VALUES (?, ?, ?, ?, ?)`;
+    db.run(stmt, [categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo], function(err2) {
+      if (err2) {
+        res.status(500).json({ error: 'Error inserting categoria' });
+      } else {
+        res.json({ categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo });
+      }
+    });
   });
 });
 
@@ -108,14 +128,17 @@ app.delete('/categorias/:id', (req, res) => {
 app.get('/instrumentos', (req, res) => handleAll('instrumentos', res));
 
 app.post('/instrumentos', (req, res) => {
-  const { instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones } = req.body;
-  const stmt = `INSERT INTO instrumentos (instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-  db.run(stmt, [instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones], function(err) {
-    if (err) {
-      res.status(500).json({ error: 'Error inserting instrumento' });
-    } else {
-      res.json({ instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones });
-    }
+  const { instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones } = req.body;
+  generateNextId('instrumentos', 'instrumento_id', 'INS', (err, instrumento_id) => {
+    if (err) return res.status(500).json({ error: 'Error generating id' });
+    const stmt = `INSERT INTO instrumentos (instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    db.run(stmt, [instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones], function(err2) {
+      if (err2) {
+        res.status(500).json({ error: 'Error inserting instrumento' });
+      } else {
+        res.json({ instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones });
+      }
+    });
   });
 });
 

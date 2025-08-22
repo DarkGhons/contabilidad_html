@@ -48,7 +48,8 @@ function renderEntity(entity, config) {
 
   const form = document.createElement('form');
   form.id = 'dimension-form';
-  config.fields.forEach(f => {
+  const formFields = config.fields.slice(1);
+  formFields.forEach(f => {
     const input = document.createElement('input');
     input.name = f;
     input.placeholder = f;
@@ -63,17 +64,22 @@ function renderEntity(entity, config) {
   form.addEventListener('submit', e => {
     e.preventDefault();
     const data = {};
-    config.fields.forEach(f => {
+    formFields.forEach(f => {
       data[f] = form[f].value;
     });
     fetch(`/${entity}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
-    }).then(() => {
-      form.reset();
-      loadData(entity, config);
-    });
+    }).then(res => {
+      if (res.ok) {
+        alert('Registro agregado correctamente');
+        form.reset();
+        loadData(entity, config);
+      } else {
+        res.json().then(msg => alert(msg.error || 'Error al agregar'));
+      }
+    }).catch(() => alert('Error al agregar'));
   });
 
   loadData(entity, config);
