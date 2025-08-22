@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Movimientos</title>
+  <style>
+    body {font-family: Arial, sans-serif; margin: 20px;}
+    form {margin-bottom: 20px;}
+    table {border-collapse: collapse; width: 100%;}
+    th, td {border: 1px solid #ccc; padding: 8px; text-align: left;}
+    th {background-color: #f5f5f5;}
+  </style>
+</head>
+<body>
+  <h1>Registro de Movimientos</h1>
+  <form id="movement-form">
+    <label>
+      Fecha:
+      <input type="date" id="date" required>
+    </label>
+    <label>
+      Descripción:
+      <input type="text" id="description" placeholder="Descripción" required>
+    </label>
+    <label>
+      Tipo:
+      <select id="type">
+        <option value="Banco">Banco</option>
+        <option value="Deuda a Pagar">Deuda a Pagar</option>
+        <option value="Deuda a Cobrar">Deuda a Cobrar</option>
+        <option value="Inversión">Inversión</option>
+        <option value="Otro">Otro</option>
+      </select>
+    </label>
+    <label>
+      Monto:
+      <input type="number" id="amount" step="0.01" placeholder="Monto" required>
+    </label>
+    <button type="submit">Agregar</button>
+  </form>
+
+  <table id="movement-table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Descripción</th>
+        <th>Tipo</th>
+        <th>Monto</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const form = document.getElementById('movement-form');
+    const tableBody = document.querySelector('#movement-table tbody');
+
+    function loadMovements() {
+      const data = JSON.parse(localStorage.getItem('movements') || '[]');
+      data.forEach(addRow);
+    }
+
+    function addRow(movement) {
+      const row = document.createElement('tr');
+        row.innerHTML = '<td>' + movement.date + '</td><td>' + movement.description + '</td><td>' + movement.type + '</td><td>' + movement.amount + '</td>';
+      tableBody.appendChild(row);
+    }
+
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const movement = {
+        date: form.date.value,
+        description: form.description.value,
+        type: form.type.value,
+        amount: parseFloat(form.amount.value).toFixed(2)
+      };
+
+      const data = JSON.parse(localStorage.getItem('movements') || '[]');
+      data.push(movement);
+      localStorage.setItem('movements', JSON.stringify(data));
+      addRow(movement);
+      form.reset();
+    });
+
+    loadMovements();
+  </script>
+</body>
+</html>
