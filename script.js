@@ -444,48 +444,24 @@ class FinanceTracker {
 
         const recentTransactions = this.transactions.slice(0, 3);
 
-        transactionsList.textContent = '';
-        recentTransactions.forEach(transaction => {
-            const safe = this.sanitizeTransaction(transaction);
-
-            const item = document.createElement('div');
-            item.className = 'transaction-item';
-
-            const iconWrapper = document.createElement('div');
-            iconWrapper.className = `transaction-icon ${safe.type}`;
-            const icon = document.createElement('i');
-            icon.className = `fas ${this.getTransactionIcon(safe.category)}`;
-            iconWrapper.appendChild(icon);
-
-            const details = document.createElement('div');
-            details.className = 'transaction-details';
-
-            const title = document.createElement('span');
-            title.className = 'transaction-title';
-            title.textContent = safe.description;
-
-            const category = document.createElement('span');
-            category.className = 'transaction-category';
-            category.textContent = this.getCategoryName(safe.category);
-
-            const date = document.createElement('span');
-            date.className = 'transaction-date';
-            date.textContent = this.formatDate(safe.date);
-
-            details.appendChild(title);
-            details.appendChild(category);
-            details.appendChild(date);
-
-            const amount = document.createElement('span');
-            amount.className = `transaction-amount ${safe.type}`;
-            amount.textContent = `${safe.type === 'income' ? '+' : '-'}€${Math.abs(safe.amount).toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
-
-            item.appendChild(iconWrapper);
-            item.appendChild(details);
-            item.appendChild(amount);
-
-            transactionsList.appendChild(item);
-        });
+        transactionsList.innerHTML = recentTransactions.map(transaction => {
+            const typeClass = transaction.monto >= 0 ? 'income' : 'expense';
+            return `
+            <div class="transaction-item">
+                <div class="transaction-icon ${typeClass}">
+                    <i class="fas ${this.getTransactionIcon(transaction.categoria_id)}"></i>
+                </div>
+                <div class="transaction-details">
+                    <span class="transaction-title">${transaction.descripcion}</span>
+                    <span class="transaction-category">${this.getCategoryName(transaction.categoria_id)}</span>
+                    <span class="transaction-date">${this.formatDate(transaction.fecha)}</span>
+                </div>
+                <span class="transaction-amount ${typeClass}">
+                    ${transaction.monto >= 0 ? '+' : '-'}€${Math.abs(transaction.monto).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                </span>
+            </div>
+            `;
+        }).join('');
     }
 
     getTransactionIcon(category) {
@@ -569,53 +545,70 @@ class FinanceTracker {
     }
 
     handleTransactionSubmit() {
-        const form = document.getElementById('transactionForm');
-        const formData = new FormData(form);
-        
+        const tipo = document.getElementById('transactionType').value;
+        const monto = parseFloat(document.getElementById('transactionAmount').value);
+        const categoria = document.getElementById('transactionCategory').value;
+        const descripcion = document.getElementById('transactionDescription').value;
+        const fecha = document.getElementById('transactionDate').value;
+
+        const fechaObj = fecha ? new Date(fecha) : new Date();
+
         const transaction = {
-            id: Date.now(),
-            type: document.getElementById('transactionType').value,
-            amount: parseFloat(document.getElementById('transactionAmount').value),
-            category: document.getElementById('transactionCategory').value,
-            description: document.getElementById('transactionDescription').value,
-            date: document.getElementById('transactionDate').value
+            mov_id: Date.now(),
+            fecha: fecha,
+            mes: fechaObj.getMonth() + 1,
+            año: fechaObj.getFullYear(),
+            cuenta_id: null,
+            temporal: false,
+            contrapartes_id: null,
+            categoria_id: categoria,
+            instrumento_id: null,
+            descripcion: descripcion,
+            monto: tipo === 'expense' ? -Math.abs(monto) : Math.abs(monto),
+            moneda: 'EUR',
+            tasa_cambio: 1,
+            estado: 'completado',
+            etiquetas: [],
+            referencia: '',
+            creado_en: new Date().toISOString(),
+            actualizado_en: new Date().toISOString()
         };
 
-        if (this.validateTransaction(transaction)) {
+        if (this.validateTransaction({ tipo, monto, categoria, descripcion, fecha })) {
             this.addTransaction(transaction);
             this.closeTransactionModal();
             this.showNotification('Transacción guardada exitosamente', 'success');
         }
     }
 
-    validateTransaction(transaction) {
+    validateTransaction(fields) {
         let isValid = true;
-        
-        if (!transaction.type) {
+
+        if (!fields.tipo) {
             this.showFieldError('transactionType', 'Selecciona un tipo de transacción');
             isValid = false;
         }
-        
-        if (!transaction.amount || transaction.amount <= 0) {
+
+        if (!fields.monto || fields.monto <= 0) {
             this.showFieldError('transactionAmount', 'Ingresa una cantidad válida');
             isValid = false;
         }
-        
-        if (!transaction.category) {
+
+        if (!fields.categoria) {
             this.showFieldError('transactionCategory', 'Selecciona una categoría');
             isValid = false;
         }
-        
-        if (!transaction.description.trim()) {
+
+        if (!fields.descripcion || !fields.descripcion.trim()) {
             this.showFieldError('transactionDescription', 'Ingresa una descripción');
             isValid = false;
         }
-        
-        if (!transaction.date) {
+
+        if (!fields.fecha) {
             this.showFieldError('transactionDate', 'Selecciona una fecha');
             isValid = false;
         }
-        
+
         return isValid;
     }
 
@@ -678,6 +671,7 @@ class FinanceTracker {
     }
 
     addTransaction(transaction) {
+        transaction.actualizado_en = new Date().toISOString();
         this.transactions.unshift(transaction);
         this.saveTransactions();
         this.renderTransactions();
@@ -698,31 +692,71 @@ class FinanceTracker {
             this.showNotification('Almacenamiento local no disponible. La persistencia se ha deshabilitado.', 'error');
         }
 
-        // Default sample transactions
+        // Default sample transactions with new structure
+        const today = new Date();
+        const yesterday = new Date(Date.now() - 86400000);
+        const twoDaysAgo = new Date(Date.now() - 172800000);
+
         return [
             {
-                id: 1,
-                type: 'expense',
-                amount: 45.20,
-                category: 'food',
-                description: 'Supermercado',
-                date: new Date().toISOString().split('T')[0]
+                mov_id: 1,
+                fecha: today.toISOString().split('T')[0],
+                mes: today.getMonth() + 1,
+                año: today.getFullYear(),
+                cuenta_id: null,
+                temporal: false,
+                contrapartes_id: null,
+                categoria_id: 'food',
+                instrumento_id: null,
+                descripcion: 'Supermercado',
+                monto: -45.20,
+                moneda: 'EUR',
+                tasa_cambio: 1,
+                estado: 'completado',
+                etiquetas: [],
+                referencia: '',
+                creado_en: today.toISOString(),
+                actualizado_en: today.toISOString()
             },
             {
-                id: 2,
-                type: 'income',
-                amount: 2450.00,
-                category: 'salary',
-                description: 'Salario',
-                date: new Date(Date.now() - 86400000).toISOString().split('T')[0]
+                mov_id: 2,
+                fecha: yesterday.toISOString().split('T')[0],
+                mes: yesterday.getMonth() + 1,
+                año: yesterday.getFullYear(),
+                cuenta_id: null,
+                temporal: false,
+                contrapartes_id: null,
+                categoria_id: 'salary',
+                instrumento_id: null,
+                descripcion: 'Salario',
+                monto: 2450.00,
+                moneda: 'EUR',
+                tasa_cambio: 1,
+                estado: 'completado',
+                etiquetas: [],
+                referencia: '',
+                creado_en: yesterday.toISOString(),
+                actualizado_en: yesterday.toISOString()
             },
             {
-                id: 3,
-                type: 'expense',
-                amount: 65.00,
-                category: 'transport',
-                description: 'Gasolina',
-                date: new Date(Date.now() - 172800000).toISOString().split('T')[0]
+                mov_id: 3,
+                fecha: twoDaysAgo.toISOString().split('T')[0],
+                mes: twoDaysAgo.getMonth() + 1,
+                año: twoDaysAgo.getFullYear(),
+                cuenta_id: null,
+                temporal: false,
+                contrapartes_id: null,
+                categoria_id: 'transport',
+                instrumento_id: null,
+                descripcion: 'Gasolina',
+                monto: -65.00,
+                moneda: 'EUR',
+                tasa_cambio: 1,
+                estado: 'completado',
+                etiquetas: [],
+                referencia: '',
+                creado_en: twoDaysAgo.toISOString(),
+                actualizado_en: twoDaysAgo.toISOString()
             }
         ];
     }
@@ -848,12 +882,12 @@ class FinanceTracker {
 
         // Calculate totals
         const totalIncome = this.filteredTransactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
-        
+            .filter(t => t.monto >= 0)
+            .reduce((sum, t) => sum + t.monto, 0);
+
         const totalExpense = this.filteredTransactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+            .filter(t => t.monto < 0)
+            .reduce((sum, t) => sum + Math.abs(t.monto), 0);
 
         // Update summary
         totalTransactionsCount.textContent = this.filteredTransactions.length;
@@ -872,48 +906,24 @@ class FinanceTracker {
         nextPageBtn.disabled = this.currentPage >= totalPages;
 
         // Render transactions
-        allTransactionsList.textContent = '';
-        pageTransactions.forEach(transaction => {
-            const safe = this.sanitizeTransaction(transaction);
-
-            const item = document.createElement('div');
-            item.className = 'transaction-item';
-
-            const iconWrapper = document.createElement('div');
-            iconWrapper.className = `transaction-icon ${safe.type}`;
-            const icon = document.createElement('i');
-            icon.className = `fas ${this.getTransactionIcon(safe.category)}`;
-            iconWrapper.appendChild(icon);
-
-            const details = document.createElement('div');
-            details.className = 'transaction-details';
-
-            const title = document.createElement('span');
-            title.className = 'transaction-title';
-            title.textContent = safe.description;
-
-            const category = document.createElement('span');
-            category.className = 'transaction-category';
-            category.textContent = this.getCategoryName(safe.category);
-
-            const date = document.createElement('span');
-            date.className = 'transaction-date';
-            date.textContent = this.formatTransactionDate(safe.date);
-
-            details.appendChild(title);
-            details.appendChild(category);
-            details.appendChild(date);
-
-            const amount = document.createElement('span');
-            amount.className = `transaction-amount ${safe.type}`;
-            amount.textContent = `${safe.type === 'income' ? '+' : '-'}€${Math.abs(safe.amount).toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
-
-            item.appendChild(iconWrapper);
-            item.appendChild(details);
-            item.appendChild(amount);
-
-            allTransactionsList.appendChild(item);
-        });
+        allTransactionsList.innerHTML = pageTransactions.map(transaction => {
+            const typeClass = transaction.monto >= 0 ? 'income' : 'expense';
+            return `
+            <div class="transaction-item">
+                <div class="transaction-icon ${typeClass}">
+                    <i class="fas ${this.getTransactionIcon(transaction.categoria_id)}"></i>
+                </div>
+                <div class="transaction-details">
+                    <span class="transaction-title">${transaction.descripcion}</span>
+                    <span class="transaction-category">${this.getCategoryName(transaction.categoria_id)}</span>
+                    <span class="transaction-date">${this.formatTransactionDate(transaction.fecha)}</span>
+                </div>
+                <span class="transaction-amount ${typeClass}">
+                    ${transaction.monto >= 0 ? '+' : '-'}€${Math.abs(transaction.monto).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
+                </span>
+            </div>
+            `;
+        }).join('');
     }
 
     formatTransactionDate(dateString) {
@@ -965,17 +975,20 @@ class FinanceTracker {
 
         this.filteredTransactions = this.transactions.filter(transaction => {
             // Type filter
-            if (typeFilter !== 'all' && transaction.type !== typeFilter) {
-                return false;
+            if (typeFilter !== 'all') {
+                const isIncome = transaction.monto >= 0;
+                if ((typeFilter === 'income' && !isIncome) || (typeFilter === 'expense' && isIncome)) {
+                    return false;
+                }
             }
 
             // Category filter
-            if (categoryFilter !== 'all' && transaction.category !== categoryFilter) {
+            if (categoryFilter !== 'all' && transaction.categoria_id !== categoryFilter) {
                 return false;
             }
 
             // Date filters
-            const transactionDate = new Date(transaction.date);
+            const transactionDate = new Date(transaction.fecha);
             if (dateFromFilter && transactionDate < new Date(dateFromFilter)) {
                 return false;
             }
