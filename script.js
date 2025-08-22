@@ -543,15 +543,27 @@ class FinanceTracker {
     handleTransactionSubmit() {
         const form = document.getElementById('transactionForm');
         const formData = new FormData(form);
-        
+
         const transaction = {
             id: Date.now(),
             type: document.getElementById('transactionType').value,
             amount: parseFloat(document.getElementById('transactionAmount').value),
-            category: document.getElementById('transactionCategory').value,
+            cuentaId: document.getElementById('cuentaId').value,
+            category: document.getElementById('categoriaId').value,
             description: document.getElementById('transactionDescription').value,
-            date: document.getElementById('transactionDate').value
+            date: document.getElementById('transactionDate').value,
+            contrapartesId: document.getElementById('contrapartesId').value,
+            instrumentoId: document.getElementById('instrumentoId').value,
+            moneda: document.getElementById('moneda').value,
+            tasaCambio: parseFloat(document.getElementById('tasaCambio').value),
+            estado: document.getElementById('estado').value,
+            temporal: document.getElementById('temporal').checked,
+            etiquetas: document.getElementById('etiquetas').value,
+            referencia: document.getElementById('referencia').value
         };
+        transaction.etiquetas = transaction.etiquetas
+            ? transaction.etiquetas.split(',').map(t => t.trim()).filter(Boolean)
+            : [];
 
         if (this.validateTransaction(transaction)) {
             this.addTransaction(transaction);
@@ -573,8 +585,13 @@ class FinanceTracker {
             isValid = false;
         }
         
+        if (!transaction.cuentaId) {
+            this.showFieldError('cuentaId', 'Selecciona una cuenta');
+            isValid = false;
+        }
+
         if (!transaction.category) {
-            this.showFieldError('transactionCategory', 'Selecciona una categoría');
+            this.showFieldError('categoriaId', 'Selecciona una categoría');
             isValid = false;
         }
         
@@ -587,7 +604,22 @@ class FinanceTracker {
             this.showFieldError('transactionDate', 'Selecciona una fecha');
             isValid = false;
         }
-        
+
+        if (!transaction.moneda) {
+            this.showFieldError('moneda', 'Selecciona una moneda');
+            isValid = false;
+        }
+
+        if (!transaction.tasaCambio || transaction.tasaCambio <= 0) {
+            this.showFieldError('tasaCambio', 'Ingresa una tasa válida');
+            isValid = false;
+        }
+
+        if (!transaction.estado) {
+            this.showFieldError('estado', 'Selecciona un estado');
+            isValid = false;
+        }
+
         return isValid;
     }
 
