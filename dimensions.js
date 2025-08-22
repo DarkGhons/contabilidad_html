@@ -17,20 +17,37 @@ const entities = {
   }
 };
 
-const app = document.getElementById('app');
+const select = document.getElementById('dimensionSelect');
+const container = document.getElementById('dimensionContainer');
 
-function createSection(entity, config) {
-  const section = document.createElement('section');
+Object.entries(entities).forEach(([key, cfg]) => {
+  const opt = document.createElement('option');
+  opt.value = key;
+  opt.textContent = cfg.label;
+  select.appendChild(opt);
+});
+
+select.addEventListener('change', () => {
+  const entity = select.value;
+  if (!entity) {
+    container.innerHTML = '';
+    return;
+  }
+  renderEntity(entity, entities[entity]);
+});
+
+function renderEntity(entity, config) {
+  container.innerHTML = '';
   const title = document.createElement('h2');
   title.textContent = config.label;
-  section.appendChild(title);
+  container.appendChild(title);
 
   const table = document.createElement('table');
-  table.id = `${entity}-table`;
-  section.appendChild(table);
+  table.id = 'dimension-table';
+  container.appendChild(table);
 
   const form = document.createElement('form');
-  form.id = `${entity}-form`;
+  form.id = 'dimension-form';
   config.fields.forEach(f => {
     const input = document.createElement('input');
     input.name = f;
@@ -41,9 +58,7 @@ function createSection(entity, config) {
   submit.type = 'submit';
   submit.textContent = 'Agregar';
   form.appendChild(submit);
-  section.appendChild(form);
-
-  app.appendChild(section);
+  container.appendChild(form);
 
   form.addEventListener('submit', e => {
     e.preventDefault();
@@ -60,10 +75,12 @@ function createSection(entity, config) {
       loadData(entity, config);
     });
   });
+
+  loadData(entity, config);
 }
 
 function renderTable(entity, config, data) {
-  const table = document.getElementById(`${entity}-table`);
+  const table = document.getElementById('dimension-table');
   table.innerHTML = '';
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -107,8 +124,3 @@ function deleteItem(entity, id, config) {
   fetch(`/${entity}/${id}`, { method: 'DELETE' })
     .then(() => loadData(entity, config));
 }
-
-Object.entries(entities).forEach(([entity, config]) => {
-  createSection(entity, config);
-  loadData(entity, config);
-});
