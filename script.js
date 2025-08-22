@@ -1,8 +1,7 @@
 // Financial Management Application JavaScript
 class FinanceTracker {
     constructor() {
-        this.storageAvailable = true;
-        this.transactions = this.loadTransactions();
+        this.transactions = [];
         this.chart = null;
         this.currentPeriod = 'monthly';
         this.translations = {
@@ -50,7 +49,7 @@ class FinanceTracker {
             }
         };
         this.currentLanguage = 'es';
-        this.init();
+        this.loadTransactions().then(() => this.init());
     }
 
     init() {
@@ -544,22 +543,24 @@ class FinanceTracker {
         this.clearValidationErrors();
     }
 
-    handleTransactionSubmit() {
-        const form = document.getElementById('transactionForm');
-        const formData = new FormData(form);
+    async handleTransactionSubmit() {
+        const tipo = document.getElementById('transactionType').value;
+        const monto = parseFloat(document.getElementById('transactionAmount').value);
+        const categoria = document.getElementById('categoriaId').value;
+        const descripcion = document.getElementById('transactionDescription').value;
+        const fecha = document.getElementById('transactionDate').value;
 
         const transaction = {
-            id: Date.now(),
-            type: document.getElementById('transactionType').value,
-            amount: parseFloat(document.getElementById('transactionAmount').value),
-            cuentaId: document.getElementById('cuentaId').value,
-            category: document.getElementById('categoriaId').value,
-            description: document.getElementById('transactionDescription').value,
-            date: document.getElementById('transactionDate').value,
-            contrapartesId: document.getElementById('contrapartesId').value,
-            instrumentoId: document.getElementById('instrumentoId').value,
+            tipo,
+            monto,
+            cuenta_id: document.getElementById('cuentaId').value,
+            categoria_id: categoria,
+            descripcion,
+            fecha,
+            contraparte_id: document.getElementById('contrapartesId').value,
+            instrumento_id: document.getElementById('instrumentoId').value,
             moneda: document.getElementById('moneda').value,
-            tasaCambio: parseFloat(document.getElementById('tasaCambio').value),
+            tasa_cambio: parseFloat(document.getElementById('tasaCambio').value),
             estado: document.getElementById('estado').value,
             temporal: document.getElementById('temporal').checked,
             etiquetas: document.getElementById('etiquetas').value,
@@ -568,43 +569,47 @@ class FinanceTracker {
         transaction.etiquetas = transaction.etiquetas
             ? transaction.etiquetas.split(',').map(t => t.trim()).filter(Boolean)
             : [];
+        const dateObj = new Date(fecha);
+        transaction.mes = dateObj.getMonth() + 1;
+        transaction.anio = dateObj.getFullYear();
+        transaction.monto = tipo === 'income' ? monto : -monto;
 
-        if (this.validateTransaction({ tipo, monto, categoria, descripcion, fecha })) {
-            this.addTransaction(transaction);
+        if (this.validateTransaction(transaction)) {
+            await this.addTransaction(transaction);
             this.closeTransactionModal();
             this.showNotification('Transacción guardada exitosamente', 'success');
         }
     }
 
-    validateTransaction(fields) {
+    validateTransaction(transaction) {
         let isValid = true;
 
-        if (!fields.tipo) {
+        if (!transaction.tipo) {
             this.showFieldError('transactionType', 'Selecciona un tipo de transacción');
             isValid = false;
         }
 
-        if (!fields.monto || fields.monto <= 0) {
+        if (!transaction.monto || transaction.monto <= 0) {
             this.showFieldError('transactionAmount', 'Ingresa una cantidad válida');
             isValid = false;
         }
-        
-        if (!transaction.cuentaId) {
+
+        if (!transaction.cuenta_id) {
             this.showFieldError('cuentaId', 'Selecciona una cuenta');
             isValid = false;
         }
 
-        if (!transaction.category) {
+        if (!transaction.categoria_id) {
             this.showFieldError('categoriaId', 'Selecciona una categoría');
             isValid = false;
         }
 
-        if (!fields.descripcion || !fields.descripcion.trim()) {
+        if (!transaction.descripcion || !transaction.descripcion.trim()) {
             this.showFieldError('transactionDescription', 'Ingresa una descripción');
             isValid = false;
         }
 
-        if (!fields.fecha) {
+        if (!transaction.fecha) {
             this.showFieldError('transactionDate', 'Selecciona una fecha');
             isValid = false;
         }
@@ -614,13 +619,8 @@ class FinanceTracker {
             isValid = false;
         }
 
-        if (!transaction.tasaCambio || transaction.tasaCambio <= 0) {
+        if (!transaction.tasa_cambio || transaction.tasa_cambio <= 0) {
             this.showFieldError('tasaCambio', 'Ingresa una tasa válida');
-            isValid = false;
-        }
-
-        if (!transaction.estado) {
-            this.showFieldError('estado', 'Selecciona un estado');
             isValid = false;
         }
 
@@ -685,107 +685,41 @@ class FinanceTracker {
         });
     }
 
-    addTransaction(transaction) {
+    async addTransaction(transaction) {
         transaction.actualizado_en = new Date().toISOString();
-        this.transactions.unshift(transaction);
-        this.saveTransactions();
-        this.renderTransactions();
-        this.updateFinancialSummary();
-        this.updateChart();
-        this.updateCategories();
+        const saved = await this.saveTransaction(transaction);
+        if (saved) {
+            this.transactions.unshift(saved);
+            this.renderTransactions();
+            this.updateFinancialSummary();
+            this.updateChart();
+            this.updateCategories();
+        }
     }
 
-    loadTransactions() {
+    async loadTransactions() {
         try {
-            const stored = localStorage.getItem('financeTracker_transactions');
-            if (stored) {
-                return JSON.parse(stored);
-            }
+            const res = await fetch('/movimientos');
+            if (!res.ok) throw new Error('Network response was not ok');
+            this.transactions = await res.json();
         } catch (error) {
-            console.error('Error accediendo a localStorage:', error);
-            this.storageAvailable = false;
-            this.showNotification('Almacenamiento local no disponible. La persistencia se ha deshabilitado.', 'error');
+            console.error('Error fetching transactions:', error);
+            this.transactions = [];
         }
-
-        // Default sample transactions with new structure
-        const today = new Date();
-        const yesterday = new Date(Date.now() - 86400000);
-        const twoDaysAgo = new Date(Date.now() - 172800000);
-
-        return [
-            {
-                mov_id: 1,
-                fecha: today.toISOString().split('T')[0],
-                mes: today.getMonth() + 1,
-                año: today.getFullYear(),
-                cuenta_id: null,
-                temporal: false,
-                contrapartes_id: null,
-                categoria_id: 'food',
-                instrumento_id: null,
-                descripcion: 'Supermercado',
-                monto: -45.20,
-                moneda: 'EUR',
-                tasa_cambio: 1,
-                estado: 'completado',
-                etiquetas: [],
-                referencia: '',
-                creado_en: today.toISOString(),
-                actualizado_en: today.toISOString()
-            },
-            {
-                mov_id: 2,
-                fecha: yesterday.toISOString().split('T')[0],
-                mes: yesterday.getMonth() + 1,
-                año: yesterday.getFullYear(),
-                cuenta_id: null,
-                temporal: false,
-                contrapartes_id: null,
-                categoria_id: 'salary',
-                instrumento_id: null,
-                descripcion: 'Salario',
-                monto: 2450.00,
-                moneda: 'EUR',
-                tasa_cambio: 1,
-                estado: 'completado',
-                etiquetas: [],
-                referencia: '',
-                creado_en: yesterday.toISOString(),
-                actualizado_en: yesterday.toISOString()
-            },
-            {
-                mov_id: 3,
-                fecha: twoDaysAgo.toISOString().split('T')[0],
-                mes: twoDaysAgo.getMonth() + 1,
-                año: twoDaysAgo.getFullYear(),
-                cuenta_id: null,
-                temporal: false,
-                contrapartes_id: null,
-                categoria_id: 'transport',
-                instrumento_id: null,
-                descripcion: 'Gasolina',
-                monto: -65.00,
-                moneda: 'EUR',
-                tasa_cambio: 1,
-                estado: 'completado',
-                etiquetas: [],
-                referencia: '',
-                creado_en: twoDaysAgo.toISOString(),
-                actualizado_en: twoDaysAgo.toISOString()
-            }
-        ];
     }
 
-    saveTransactions() {
-        if (!this.storageAvailable) {
-            return;
-        }
+    async saveTransaction(transaction) {
         try {
-            localStorage.setItem('financeTracker_transactions', JSON.stringify(this.transactions));
+            const res = await fetch('/movimientos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(transaction)
+            });
+            if (!res.ok) throw new Error('Network response was not ok');
+            return await res.json();
         } catch (error) {
-            console.error('Error guardando en localStorage:', error);
-            this.storageAvailable = false;
-            this.showNotification('No se pudo guardar en el almacenamiento local. La persistencia se ha deshabilitado.', 'error');
+            console.error('Error saving transaction:', error);
+            this.showNotification('No se pudo guardar la transacción.', 'error');
         }
     }
 
@@ -962,23 +896,23 @@ class FinanceTracker {
         const allowedTypes = ['income', 'expense'];
         const allowedCategories = ['food', 'transport', 'entertainment', 'utilities', 'salary', 'other'];
 
-        const type = allowedTypes.includes(transaction.type) ? transaction.type : 'expense';
-        const category = allowedCategories.includes(transaction.category) ? transaction.category : 'other';
-        const description = this.sanitizeText(transaction.description);
+        const tipo = allowedTypes.includes(transaction.tipo) ? transaction.tipo : 'expense';
+        const categoria_id = allowedCategories.includes(transaction.categoria_id) ? transaction.categoria_id : 'other';
+        const descripcion = this.sanitizeText(transaction.descripcion);
 
-        const dateObj = new Date(transaction.date);
+        const dateObj = new Date(transaction.fecha);
         const safeDate = isNaN(dateObj.getTime()) ? new Date() : dateObj;
 
-        const amount = typeof transaction.amount === 'number' && isFinite(transaction.amount)
-            ? transaction.amount
+        const monto = typeof transaction.monto === 'number' && isFinite(transaction.monto)
+            ? transaction.monto
             : 0;
 
         return {
-            type,
-            category,
-            description,
-            date: safeDate.toISOString(),
-            amount
+            tipo,
+            categoria_id,
+            descripcion,
+            fecha: safeDate.toISOString(),
+            monto
         };
     }
 
