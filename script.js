@@ -524,10 +524,41 @@ class FinanceTracker {
         }, 500);
     }
 
-    openTransactionModal() {
+    async loadDimensionOptions() {
+        const mappings = [
+            { url: '/cuentas', selectId: 'cuentaId', idField: 'cuenta_id', textField: 'cuenta_nombre' },
+            { url: '/categorias', selectId: 'categoriaId', idField: 'categoria_id', textField: 'categoria_nombre' },
+            { url: '/instrumentos', selectId: 'instrumentoId', idField: 'instrumento_id', textField: 'instrumento_nombre' },
+            { url: '/contrapartes', selectId: 'contraparteId', idField: 'contraparte_id', textField: 'contraparte_nombre' }
+        ];
+
+        for (const map of mappings) {
+            try {
+                const res = await fetch(map.url);
+                const data = await res.json();
+                const select = document.getElementById(map.selectId);
+                if (select) {
+                    const placeholder = select.querySelector('option[value=""]');
+                    select.innerHTML = '';
+                    if (placeholder) select.appendChild(placeholder);
+                    data.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item[map.idField];
+                        opt.textContent = item[map.textField];
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error('Error loading', map.url, e);
+            }
+        }
+    }
+
+    async openTransactionModal() {
         const modal = document.getElementById('transactionModal');
         modal?.classList.add('show');
         document.body.style.overflow = 'hidden';
+        await this.loadDimensionOptions();
     }
 
     closeTransactionModal() {
@@ -557,7 +588,7 @@ class FinanceTracker {
             categoria_id: categoria,
             descripcion,
             fecha,
-            contraparte_id: document.getElementById('contrapartesId').value,
+            contraparte_id: document.getElementById('contraparteId').value,
             instrumento_id: document.getElementById('instrumentoId').value,
             moneda: document.getElementById('moneda').value,
             tasa_cambio: parseFloat(document.getElementById('tasaCambio').value),
