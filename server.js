@@ -4,6 +4,17 @@ const initDb = require('./scripts/init_db');
 const app = express();
 const db = initDb();
 
+// Basic CORS support so the frontend can call the API from other ports or file://
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json());
 
 app.get('/movimientos', (req, res) => {

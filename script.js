@@ -49,7 +49,11 @@ class FinanceTracker {
             }
         };
         this.currentLanguage = 'es';
-        this.API_BASE = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
+        const { protocol, hostname, port } = window.location;
+        const isLocalhost = ['localhost', '127.0.0.1'].includes(hostname);
+        this.API_BASE = (protocol === 'file:' || (isLocalhost && port !== '3000'))
+            ? 'http://localhost:3000'
+            : '';
         this.loadTransactions().then(() => this.init());
     }
 
