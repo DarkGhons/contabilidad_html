@@ -1,6 +1,7 @@
 // Financial Management Application JavaScript
 class FinanceTracker {
     constructor() {
+        this.storageAvailable = true;
         this.transactions = this.loadTransactions();
         this.chart = null;
         this.currentPeriod = 'monthly';
@@ -659,11 +660,17 @@ class FinanceTracker {
     }
 
     loadTransactions() {
-        const stored = localStorage.getItem('financeTracker_transactions');
-        if (stored) {
-            return JSON.parse(stored);
+        try {
+            const stored = localStorage.getItem('financeTracker_transactions');
+            if (stored) {
+                return JSON.parse(stored);
+            }
+        } catch (error) {
+            console.error('Error accediendo a localStorage:', error);
+            this.storageAvailable = false;
+            this.showNotification('Almacenamiento local no disponible. La persistencia se ha deshabilitado.', 'error');
         }
-        
+
         // Default sample transactions
         return [
             {
@@ -694,7 +701,16 @@ class FinanceTracker {
     }
 
     saveTransactions() {
-        localStorage.setItem('financeTracker_transactions', JSON.stringify(this.transactions));
+        if (!this.storageAvailable) {
+            return;
+        }
+        try {
+            localStorage.setItem('financeTracker_transactions', JSON.stringify(this.transactions));
+        } catch (error) {
+            console.error('Error guardando en localStorage:', error);
+            this.storageAvailable = false;
+            this.showNotification('No se pudo guardar en el almacenamiento local. La persistencia se ha deshabilitado.', 'error');
+        }
     }
 
     setCurrentDate() {
