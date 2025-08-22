@@ -21,3 +21,7 @@ function init() {
 }
 
 module.exports = init;
+
+if (require.main === module) {
+  init();
+}
