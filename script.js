@@ -546,20 +546,23 @@ class FinanceTracker {
 
     handleTransactionSubmit() {
         const form = document.getElementById('transactionForm');
-        const formData = new FormData(form);
+        const fecha = document.getElementById('transactionDate').value;
+        const fechaObj = new Date(fecha);
 
         const transaction = {
-            id: Date.now(),
-            type: document.getElementById('transactionType').value,
-            amount: parseFloat(document.getElementById('transactionAmount').value),
-            cuentaId: document.getElementById('cuentaId').value,
-            category: document.getElementById('categoriaId').value,
-            description: document.getElementById('transactionDescription').value,
-            date: document.getElementById('transactionDate').value,
-            contrapartesId: document.getElementById('contrapartesId').value,
-            instrumentoId: document.getElementById('instrumentoId').value,
+            mov_id: Date.now(),
+            tipo: document.getElementById('transactionType').value,
+            monto: parseFloat(document.getElementById('transactionAmount').value),
+            cuenta_id: document.getElementById('cuentaId').value,
+            categoria_id: document.getElementById('categoriaId').value,
+            descripcion: document.getElementById('transactionDescription').value,
+            fecha,
+            mes: fechaObj.getMonth() + 1,
+            anio: fechaObj.getFullYear(),
+            contraparte_id: document.getElementById('contraparteId').value,
+            instrumento_id: document.getElementById('instrumentoId').value,
             moneda: document.getElementById('moneda').value,
-            tasaCambio: parseFloat(document.getElementById('tasaCambio').value),
+            tasa_cambio: parseFloat(document.getElementById('tasaCambio').value),
             estado: document.getElementById('estado').value,
             temporal: document.getElementById('temporal').checked,
             etiquetas: document.getElementById('etiquetas').value,
@@ -569,42 +572,42 @@ class FinanceTracker {
             ? transaction.etiquetas.split(',').map(t => t.trim()).filter(Boolean)
             : [];
 
-        if (this.validateTransaction({ tipo, monto, categoria, descripcion, fecha })) {
+        if (this.validateTransaction(transaction)) {
             this.addTransaction(transaction);
             this.closeTransactionModal();
             this.showNotification('Transacción guardada exitosamente', 'success');
         }
     }
 
-    validateTransaction(fields) {
+    validateTransaction(transaction) {
         let isValid = true;
 
-        if (!fields.tipo) {
+        if (!transaction.tipo) {
             this.showFieldError('transactionType', 'Selecciona un tipo de transacción');
             isValid = false;
         }
 
-        if (!fields.monto || fields.monto <= 0) {
+        if (!transaction.monto || transaction.monto <= 0) {
             this.showFieldError('transactionAmount', 'Ingresa una cantidad válida');
             isValid = false;
         }
-        
-        if (!transaction.cuentaId) {
+
+        if (!transaction.cuenta_id) {
             this.showFieldError('cuentaId', 'Selecciona una cuenta');
             isValid = false;
         }
 
-        if (!transaction.category) {
+        if (!transaction.categoria_id) {
             this.showFieldError('categoriaId', 'Selecciona una categoría');
             isValid = false;
         }
 
-        if (!fields.descripcion || !fields.descripcion.trim()) {
+        if (!transaction.descripcion || !transaction.descripcion.trim()) {
             this.showFieldError('transactionDescription', 'Ingresa una descripción');
             isValid = false;
         }
 
-        if (!fields.fecha) {
+        if (!transaction.fecha) {
             this.showFieldError('transactionDate', 'Selecciona una fecha');
             isValid = false;
         }
@@ -614,7 +617,7 @@ class FinanceTracker {
             isValid = false;
         }
 
-        if (!transaction.tasaCambio || transaction.tasaCambio <= 0) {
+        if (!transaction.tasa_cambio || transaction.tasa_cambio <= 0) {
             this.showFieldError('tasaCambio', 'Ingresa una tasa válida');
             isValid = false;
         }
@@ -717,10 +720,10 @@ class FinanceTracker {
                 mov_id: 1,
                 fecha: today.toISOString().split('T')[0],
                 mes: today.getMonth() + 1,
-                año: today.getFullYear(),
+                anio: today.getFullYear(),
                 cuenta_id: null,
                 temporal: false,
-                contrapartes_id: null,
+                contraparte_id: null,
                 categoria_id: 'food',
                 instrumento_id: null,
                 descripcion: 'Supermercado',
@@ -737,10 +740,10 @@ class FinanceTracker {
                 mov_id: 2,
                 fecha: yesterday.toISOString().split('T')[0],
                 mes: yesterday.getMonth() + 1,
-                año: yesterday.getFullYear(),
+                anio: yesterday.getFullYear(),
                 cuenta_id: null,
                 temporal: false,
-                contrapartes_id: null,
+                contraparte_id: null,
                 categoria_id: 'salary',
                 instrumento_id: null,
                 descripcion: 'Salario',
@@ -757,10 +760,10 @@ class FinanceTracker {
                 mov_id: 3,
                 fecha: twoDaysAgo.toISOString().split('T')[0],
                 mes: twoDaysAgo.getMonth() + 1,
-                año: twoDaysAgo.getFullYear(),
+                anio: twoDaysAgo.getFullYear(),
                 cuenta_id: null,
                 temporal: false,
-                contrapartes_id: null,
+                contraparte_id: null,
                 categoria_id: 'transport',
                 instrumento_id: null,
                 descripcion: 'Gasolina',
@@ -962,23 +965,25 @@ class FinanceTracker {
         const allowedTypes = ['income', 'expense'];
         const allowedCategories = ['food', 'transport', 'entertainment', 'utilities', 'salary', 'other'];
 
-        const type = allowedTypes.includes(transaction.type) ? transaction.type : 'expense';
-        const category = allowedCategories.includes(transaction.category) ? transaction.category : 'other';
-        const description = this.sanitizeText(transaction.description);
+        const tipo = allowedTypes.includes(transaction.tipo) ? transaction.tipo : 'expense';
+        const categoria_id = allowedCategories.includes(transaction.categoria_id) ? transaction.categoria_id : 'other';
+        const descripcion = this.sanitizeText(transaction.descripcion);
 
-        const dateObj = new Date(transaction.date);
+        const dateObj = new Date(transaction.fecha);
         const safeDate = isNaN(dateObj.getTime()) ? new Date() : dateObj;
 
-        const amount = typeof transaction.amount === 'number' && isFinite(transaction.amount)
-            ? transaction.amount
+        const monto = typeof transaction.monto === 'number' && isFinite(transaction.monto)
+            ? transaction.monto
             : 0;
 
         return {
-            type,
-            category,
-            description,
-            date: safeDate.toISOString(),
-            amount
+            tipo,
+            categoria_id,
+            descripcion,
+            fecha: safeDate.toISOString(),
+            mes: safeDate.getMonth() + 1,
+            anio: safeDate.getFullYear(),
+            monto
         };
     }
 
