@@ -31,7 +31,7 @@ Una aplicación web moderna y responsive para el seguimiento y gestión de finan
 ### 🔧 Funcionalidades Avanzadas
 - **Importación de datos** CSV/Excel
 - **Escaneo de recibos** (preparado para OCR)
-- **Almacenamiento local** de datos
+- **API REST** con persistencia en SQLite
 - **Notificaciones** del sistema
 - **Menú de usuario** con configuraciones
 
@@ -42,7 +42,8 @@ Una aplicación web moderna y responsive para el seguimiento y gestión de finan
 - **JavaScript ES6+** - Lógica de aplicación y manejo de datos
 - **Chart.js** - Gráficos interactivos
 - **Font Awesome** - Iconografía
-- **LocalStorage** - Persistencia de datos
+- **Node.js + Express** - API REST
+- **SQLite** - Persistencia de datos
 
 ## 📱 Compatibilidad
 
@@ -55,23 +56,11 @@ Una aplicación web moderna y responsive para el seguimiento y gestión de finan
 ## 🚀 Instalación y Uso
 
 1. **Clona o descarga** el repositorio
-2. **Abre** `index.html` en tu navegador web
-3. **¡Listo!** No requiere instalación adicional
-
-### Servidor Local (Opcional)
-
-Para desarrollo o testing con un servidor local:
-
-```bash
-# Con Python
-python -m http.server 8000
-
-# Con Node.js (http-server)
-npx http-server
-
-# Con PHP
-php -S localhost:8000
-```
+2. **Instala dependencias** con `npm install`
+3. **Inicializa** la base de datos con `npm run init-db`
+4. **Inicia** el servidor con `npm start`
+5. **Sirve** los archivos estáticos (p. ej. `npx http-server`)
+6. **Abre** la aplicación en tu navegador
 
 ## 📁 Estructura del Proyecto
 
@@ -123,10 +112,9 @@ const categories = ['food', 'transport', 'entertainment', ...];
 
 ## 📊 Funcionalidades de Datos
 
-### Almacenamiento Local
-- Las transacciones se guardan en `localStorage`
-- Configuraciones de usuario persistentes
-- Preferencias de idioma recordadas
+### Persistencia
+- Las transacciones se almacenan en una base de datos SQLite mediante la API REST
+- Configuraciones de usuario y preferencias de idioma se guardan en `localStorage`
 
 ### Importación de Datos
 - Soporte para archivos CSV y Excel
@@ -135,8 +123,8 @@ const categories = ['food', 'transport', 'entertainment', ...];
 
 ## 🔒 Seguridad y Privacidad
 
-- **Datos locales**: Toda la información se almacena localmente
-- **Sin servidor**: No se envían datos a servidores externos
+- **Datos locales**: La información se almacena en una base de datos SQLite local
+- **Servidor local**: Las peticiones se procesan en un backend Express
 - **Validación**: Validación de entrada en cliente y preparada para servidor
 - **Sanitización**: Prevención de XSS en inputs de usuario
 
@@ -165,8 +153,8 @@ const categories = ['food', 'transport', 'entertainment', ...];
 - Comprueba la consola del navegador para errores
 
 **Los datos no se guardan:**
-- Asegúrate de que localStorage esté habilitado
-- Verifica que no estés en modo incógnito
+- Asegúrate de que el servidor Node.js esté en ejecución
+- Verifica que la base de datos haya sido inicializada
 
 **Problemas de responsive:**
 - Limpia la caché del navegador
