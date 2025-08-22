@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ingreso Hecho Contable</title>
+  <style>
+    body {font-family: Arial, sans-serif; margin: 20px;}
+    form {display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 500px;}
+    fieldset {grid-column: span 2; border: 1px solid #ccc; padding: 10px;}
+    fieldset label {margin-right: 10px;}
+    .actions {grid-column: span 2; display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;}
+    #idCuenta {grid-column: span 2; margin-top: 10px;}
+    label input {width: 100%;}
+  </style>
+</head>
+<body>
+  <h1>Ingreso Hecho Contable</h1>
+  <form id="entry-form">
+    <label>Cuenta Nº1 (+)<br><input type="text" id="account1" required></label>
+    <label>Cuenta Nº2 (-)<br><input type="text" id="account2" required></label>
+    <label>Categoría<br><input type="text" id="category" required></label>
+    <label>Monto ($)<br><input type="number" id="amount" step="0.01" required></label>
+    <label style="grid-column: span 2;">Descripción<br><input type="text" id="description" required></label>
+    <fieldset>
+      <legend>Fecha</legend>
+      <label><input type="radio" name="dateOption" value="today" checked> Fecha de Hoy</label>
+      <label><input type="radio" name="dateOption" value="other"> Otra</label>
+      <input type="date" id="date" disabled>
+    </fieldset>
+    <div id="idCuenta">ID_Cuenta: <span id="accountId"></span></div>
+    <div class="actions">
+      <button type="button" id="close-btn">Cerrar</button>
+      <button type="submit">Ingresar</button>
+    </div>
+  </form>
+
+  <script>
+    const accountIdSpan = document.getElementById('accountId');
+    function generateId() {
+      return 'HC' + Math.floor(Math.random() * 9000 + 1000);
+    }
+    accountIdSpan.textContent = generateId();
+
+    const dateField = document.getElementById('date');
+    document.querySelectorAll('input[name="dateOption"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'other' && radio.checked) {
+          dateField.disabled = false;
+          dateField.required = true;
+          dateField.focus();
+        } else if (radio.value === 'today' && radio.checked) {
+          dateField.disabled = true;
+          dateField.required = false;
+        }
+      });
+    });
+
+    const form = document.getElementById('entry-form');
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const data = {
+        cuenta1: form.account1.value,
+        cuenta2: form.account2.value,
+        categoria: form.category.value,
+        monto: parseFloat(form.amount.value).toFixed(2),
+        descripcion: form.description.value,
+        fecha: document.querySelector('input[name="dateOption"]:checked').value === 'today'
+          ? new Date().toISOString().split('T')[0]
+          : form.date.value,
+        id: accountIdSpan.textContent
+      };
+      console.log('Ingreso guardado:', data);
+      alert('Ingreso registrado');
+      form.reset();
+      accountIdSpan.textContent = generateId();
+      dateField.disabled = true;
+      dateField.required = false;
+    });
+
+    document.getElementById('close-btn').addEventListener('click', () => {
+      window.close();
+    });
+  </script>
+</body>
+</html>
