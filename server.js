@@ -16,6 +16,119 @@ app.get('/movimientos', (req, res) => {
   });
 });
 
+// ---- Endpoints for dimension tables ----
+
+// Generic helper to handle database operations
+function handleAll(table, res) {
+  db.all(`SELECT * FROM ${table}`, [], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: `Error fetching ${table}` });
+    } else {
+      res.json(rows);
+    }
+  });
+}
+
+// Cuentas
+app.get('/cuentas', (req, res) => handleAll('cuentas', res));
+
+app.post('/cuentas', (req, res) => {
+  const { cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa } = req.body;
+  const stmt = `INSERT INTO cuentas (cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+  db.run(stmt, [cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa], function(err) {
+    if (err) {
+      res.status(500).json({ error: 'Error inserting cuenta' });
+    } else {
+      res.json({ cuenta_id, cuenta_nombre, tipo_cuenta, banco, nro_mascarado, moneda_base, activa });
+    }
+  });
+});
+
+app.delete('/cuentas/:id', (req, res) => {
+  db.run('DELETE FROM cuentas WHERE cuenta_id = ?', [req.params.id], function(err) {
+    if (err) {
+      res.status(500).json({ error: 'Error deleting cuenta' });
+    } else {
+      res.json({ deleted: this.changes });
+    }
+  });
+});
+
+// Contrapartes
+app.get('/contrapartes', (req, res) => handleAll('contrapartes', res));
+
+app.post('/contrapartes', (req, res) => {
+  const { contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas } = req.body;
+  const stmt = `INSERT INTO contrapartes (contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas) VALUES (?, ?, ?, ?, ?, ?)`;
+  db.run(stmt, [contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas], function(err) {
+    if (err) {
+      res.status(500).json({ error: 'Error inserting contraparte' });
+    } else {
+      res.json({ contraparte_id, contraparte_nombre, tipo, subtipo, activa, notas });
+    }
+  });
+});
+
+app.delete('/contrapartes/:id', (req, res) => {
+  db.run('DELETE FROM contrapartes WHERE contraparte_id = ?', [req.params.id], function(err) {
+    if (err) {
+      res.status(500).json({ error: 'Error deleting contraparte' });
+    } else {
+      res.json({ deleted: this.changes });
+    }
+  });
+});
+
+// Categorias
+app.get('/categorias', (req, res) => handleAll('categorias', res));
+
+app.post('/categorias', (req, res) => {
+  const { categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo } = req.body;
+  const stmt = `INSERT INTO categorias (categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo) VALUES (?, ?, ?, ?, ?)`;
+  db.run(stmt, [categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo], function(err) {
+    if (err) {
+      res.status(500).json({ error: 'Error inserting categoria' });
+    } else {
+      res.json({ categoria_id, tipo_flujo, categoria_nombre, grupo, subgrupo });
+    }
+  });
+});
+
+app.delete('/categorias/:id', (req, res) => {
+  db.run('DELETE FROM categorias WHERE categoria_id = ?', [req.params.id], function(err) {
+    if (err) {
+      res.status(500).json({ error: 'Error deleting categoria' });
+    } else {
+      res.json({ deleted: this.changes });
+    }
+  });
+});
+
+// Instrumentos
+app.get('/instrumentos', (req, res) => handleAll('instrumentos', res));
+
+app.post('/instrumentos', (req, res) => {
+  const { instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones } = req.body;
+  const stmt = `INSERT INTO instrumentos (instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  db.run(stmt, [instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones], function(err) {
+    if (err) {
+      res.status(500).json({ error: 'Error inserting instrumento' });
+    } else {
+      res.json({ instrumento_id, instrumento_nombre, tipo, emisor, monto_inicial, plazo, tasa, v_cuota, monto_actual, cupo, moneda, observaciones });
+    }
+  });
+});
+
+app.delete('/instrumentos/:id', (req, res) => {
+  db.run('DELETE FROM instrumentos WHERE instrumento_id = ?', [req.params.id], function(err) {
+    if (err) {
+      res.status(500).json({ error: 'Error deleting instrumento' });
+    } else {
+      res.json({ deleted: this.changes });
+    }
+  });
+});
+
 app.post('/movimientos', (req, res) => {
   const {
     fecha,
