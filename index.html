@@ -1,88 +1,405 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Registro de Movimientos</title>
-  <style>
-    body {font-family: Arial, sans-serif; margin: 20px;}
-    form {margin-bottom: 20px;}
-    table {border-collapse: collapse; width: 100%;}
-    th, td {border: 1px solid #ccc; padding: 8px; text-align: left;}
-    th {background-color: #f5f5f5;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceTracker - Gestión Financiera Personal</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>Registro de Movimientos</h1>
-  <form id="movement-form">
-    <label>
-      Fecha:
-      <input type="date" id="date" required>
-    </label>
-    <label>
-      Descripción:
-      <input type="text" id="description" placeholder="Descripción" required>
-    </label>
-    <label>
-      Tipo:
-      <select id="type">
-        <option value="Banco">Banco</option>
-        <option value="Deuda a Pagar">Deuda a Pagar</option>
-        <option value="Deuda a Cobrar">Deuda a Cobrar</option>
-        <option value="Inversión">Inversión</option>
-        <option value="Otro">Otro</option>
-      </select>
-    </label>
-    <label>
-      Monto:
-      <input type="number" id="amount" step="0.01" placeholder="Monto" required>
-    </label>
-    <button type="submit">Agregar</button>
-  </form>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-chart-line"></i>
+                <span>FinanceTracker</span>
+            </div>
+            
+            <div class="nav-actions">
+                <!-- Language Selector -->
+                <div class="language-selector">
+                    <select id="languageSelect">
+                        <option value="es">🇪🇸 Español</option>
+                        <option value="en">🇺🇸 English</option>
+                        <option value="fr">🇫🇷 Français</option>
+                    </select>
+                </div>
+                
+                <!-- User Menu -->
+                <div class="user-menu">
+                    <button class="user-btn" id="userMenuBtn">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Usuario</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#"><i class="fas fa-user"></i> Perfil</a>
+                        <a href="#"><i class="fas fa-cog"></i> Configuración</a>
+                        <a href="#"><i class="fas fa-bell"></i> Notificaciones</a>
+                        <hr>
+                        <a href="#"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-  <table id="movement-table">
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>Descripción</th>
-        <th>Tipo</th>
-        <th>Monto</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Financial Summary Cards -->
+        <section class="financial-summary">
+            <h2>Resumen Financiero</h2>
+            <div class="summary-cards">
+                <div class="card income-card">
+                    <div class="card-header">
+                        <i class="fas fa-arrow-up"></i>
+                        <h3>Ingresos del Mes</h3>
+                    </div>
+                    <div class="card-value">
+                        <span class="amount" id="monthlyIncome">€2,450.00</span>
+                        <span class="change positive">+12.5%</span>
+                    </div>
+                </div>
+                
+                <div class="card expense-card">
+                    <div class="card-header">
+                        <i class="fas fa-arrow-down"></i>
+                        <h3>Gastos del Mes</h3>
+                    </div>
+                    <div class="card-value">
+                        <span class="amount" id="monthlyExpenses">€1,890.50</span>
+                        <span class="change negative">+8.2%</span>
+                    </div>
+                </div>
+                
+                <div class="card savings-card">
+                    <div class="card-header">
+                        <i class="fas fa-piggy-bank"></i>
+                        <h3>Ahorro del Mes</h3>
+                    </div>
+                    <div class="card-value">
+                        <span class="amount" id="monthlySavings">€559.50</span>
+                        <span class="change positive">+22.8%</span>
+                    </div>
+                </div>
+                
+                <div class="card balance-card">
+                    <div class="card-header">
+                        <i class="fas fa-wallet"></i>
+                        <h3>Balance Total</h3>
+                    </div>
+                    <div class="card-value">
+                        <span class="amount" id="totalBalance">€12,340.75</span>
+                        <span class="change positive">+5.1%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-  <script>
-    const form = document.getElementById('movement-form');
-    const tableBody = document.querySelector('#movement-table tbody');
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <h2>Acciones Rápidas</h2>
+            <div class="action-buttons">
+                <button class="action-btn primary" id="newTransactionBtn">
+                    <i class="fas fa-plus"></i>
+                    <span>Nueva Transacción</span>
+                </button>
+                <button class="action-btn secondary" id="scanReceiptBtn">
+                    <i class="fas fa-camera"></i>
+                    <span>Escanear Recibo</span>
+                </button>
+                <button class="action-btn secondary" id="importDataBtn">
+                    <i class="fas fa-file-import"></i>
+                    <span>Importar Datos</span>
+                </button>
+                <button class="action-btn secondary" id="createGoalBtn">
+                    <i class="fas fa-target"></i>
+                    <span>Crear Objetivo</span>
+                </button>
+            </div>
+        </section>
 
-    function loadMovements() {
-      const data = JSON.parse(localStorage.getItem('movements') || '[]');
-      data.forEach(addRow);
-    }
+        <!-- Financial Trend Chart -->
+        <section class="chart-section">
+            <div class="chart-header">
+                <h2>Tendencia Financiera</h2>
+                <div class="chart-controls">
+                    <div class="time-filters">
+                        <button class="time-btn active" data-period="daily">Diario</button>
+                        <button class="time-btn" data-period="weekly">Semanal</button>
+                        <button class="time-btn" data-period="monthly">Mensual</button>
+                        <button class="time-btn" data-period="yearly">Anual</button>
+                    </div>
+                    <div class="chart-legend">
+                        <label class="legend-item">
+                            <input type="checkbox" checked data-dataset="income">
+                            <span class="legend-color income"></span>
+                            Ingresos
+                        </label>
+                        <label class="legend-item">
+                            <input type="checkbox" checked data-dataset="expenses">
+                            <span class="legend-color expenses"></span>
+                            Gastos
+                        </label>
+                        <label class="legend-item">
+                            <input type="checkbox" checked data-dataset="savings">
+                            <span class="legend-color savings"></span>
+                            Ahorros
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="financialChart"></canvas>
+            </div>
+        </section>
 
-    function addRow(movement) {
-      const row = document.createElement('tr');
-        row.innerHTML = '<td>' + movement.date + '</td><td>' + movement.description + '</td><td>' + movement.type + '</td><td>' + movement.amount + '</td>';
-      tableBody.appendChild(row);
-    }
+        <!-- Additional Information Panel -->
+        <section class="info-panel">
+            <div class="panel-left">
+                <!-- Recent Transactions -->
+                <div class="transactions-section">
+                    <h3>Transacciones Recientes</h3>
+                    <div class="transactions-list" id="transactionsList">
+                        <div class="transaction-item">
+                            <div class="transaction-icon expense">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <span class="transaction-title">Supermercado</span>
+                                <span class="transaction-category">Alimentación</span>
+                                <span class="transaction-date">Hoy, 14:30</span>
+                            </div>
+                            <span class="transaction-amount expense">-€45.20</span>
+                        </div>
+                        
+                        <div class="transaction-item">
+                            <div class="transaction-icon income">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <span class="transaction-title">Salario</span>
+                                <span class="transaction-category">Trabajo</span>
+                                <span class="transaction-date">Ayer, 09:00</span>
+                            </div>
+                            <span class="transaction-amount income">+€2,450.00</span>
+                        </div>
+                        
+                        <div class="transaction-item">
+                            <div class="transaction-icon expense">
+                                <i class="fas fa-gas-pump"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <span class="transaction-title">Gasolina</span>
+                                <span class="transaction-category">Transporte</span>
+                                <span class="transaction-date">20 Ago, 18:45</span>
+                            </div>
+                            <span class="transaction-amount expense">-€65.00</span>
+                        </div>
+                    </div>
+                    <button class="view-all-btn">Ver Todas las Transacciones</button>
+                </div>
+            </div>
+            
+            <div class="panel-right">
+                <!-- Expense Categories -->
+                <div class="categories-section">
+                    <h3>Categorías de Gastos</h3>
+                    <div class="category-list">
+                        <div class="category-item">
+                            <div class="category-info">
+                                <span class="category-name">Alimentación</span>
+                                <span class="category-amount">€450.30</span>
+                            </div>
+                            <div class="category-bar">
+                                <div class="category-progress" style="width: 65%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="category-item">
+                            <div class="category-info">
+                                <span class="category-name">Transporte</span>
+                                <span class="category-amount">€320.80</span>
+                            </div>
+                            <div class="category-bar">
+                                <div class="category-progress" style="width: 45%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="category-item">
+                            <div class="category-info">
+                                <span class="category-name">Entretenimiento</span>
+                                <span class="category-amount">€180.50</span>
+                            </div>
+                            <div class="category-bar">
+                                <div class="category-progress" style="width: 25%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Financial Goals -->
+                <div class="goals-section">
+                    <h3>Objetivos Financieros</h3>
+                    <div class="goal-item">
+                        <div class="goal-header">
+                            <span class="goal-name">Vacaciones de Verano</span>
+                            <span class="goal-progress-text">€1,200 / €2,000</span>
+                        </div>
+                        <div class="goal-bar">
+                            <div class="goal-progress" style="width: 60%"></div>
+                        </div>
+                        <span class="goal-deadline">Meta: Junio 2024</span>
+                    </div>
+                    
+                    <div class="goal-item">
+                        <div class="goal-header">
+                            <span class="goal-name">Fondo de Emergencia</span>
+                            <span class="goal-progress-text">€3,500 / €5,000</span>
+                        </div>
+                        <div class="goal-bar">
+                            <div class="goal-progress" style="width: 70%"></div>
+                        </div>
+                        <span class="goal-deadline">Meta: Diciembre 2024</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-    form.addEventListener('submit', event => {
-      event.preventDefault();
-      const movement = {
-        date: form.date.value,
-        description: form.description.value,
-        type: form.type.value,
-        amount: parseFloat(form.amount.value).toFixed(2)
-      };
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#" id="rateAppBtn"><i class="fas fa-star"></i> Valorar App</a>
+                <a href="#" id="feedbackBtn"><i class="fas fa-comment"></i> Feedback</a>
+                <a href="#" id="supportBtn"><i class="fas fa-life-ring"></i> Soporte</a>
+            </div>
+            <div class="footer-info">
+                <span>&copy; 2024 FinanceTracker. Todos los derechos reservados.</span>
+            </div>
+        </div>
+    </footer>
 
-      const data = JSON.parse(localStorage.getItem('movements') || '[]');
-      data.push(movement);
-      localStorage.setItem('movements', JSON.stringify(data));
-      addRow(movement);
-      form.reset();
-    });
+    <!-- Modals -->
+    <!-- All Transactions Modal -->
+    <div id="allTransactionsModal" class="modal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h3>Todas las Transacciones</h3>
+                <button class="close-btn" id="closeAllTransactionsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="transactions-filters">
+                    <div class="filter-group">
+                        <label for="filterType">Tipo:</label>
+                        <select id="filterType">
+                            <option value="all">Todos</option>
+                            <option value="income">Ingresos</option>
+                            <option value="expense">Gastos</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterCategory">Categoría:</label>
+                        <select id="filterCategory">
+                            <option value="all">Todas</option>
+                            <option value="food">Alimentación</option>
+                            <option value="transport">Transporte</option>
+                            <option value="entertainment">Entretenimiento</option>
+                            <option value="utilities">Servicios</option>
+                            <option value="salary">Salario</option>
+                            <option value="other">Otros</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterDateFrom">Desde:</label>
+                        <input type="date" id="filterDateFrom">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterDateTo">Hasta:</label>
+                        <input type="date" id="filterDateTo">
+                    </div>
+                    <button class="btn-filter" id="applyFiltersBtn">Aplicar Filtros</button>
+                    <button class="btn-clear" id="clearFiltersBtn">Limpiar</button>
+                </div>
+                
+                <div class="transactions-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Total Transacciones:</span>
+                        <span id="totalTransactionsCount">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Ingresos:</span>
+                        <span id="totalIncomeAmount" class="income">€0.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Gastos:</span>
+                        <span id="totalExpenseAmount" class="expense">€0.00</span>
+                    </div>
+                </div>
+                
+                <div class="all-transactions-list" id="allTransactionsList">
+                    <!-- Transactions will be populated here -->
+                </div>
+                
+                <div class="pagination" id="transactionsPagination">
+                    <button class="pagination-btn" id="prevPageBtn" disabled>Anterior</button>
+                    <span class="pagination-info" id="paginationInfo">Página 1 de 1</span>
+                    <button class="pagination-btn" id="nextPageBtn" disabled>Siguiente</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    loadMovements();
-  </script>
+    <div id="transactionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nueva Transacción</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="transactionForm">
+                <div class="form-group">
+                    <label for="transactionType">Tipo</label>
+                    <select id="transactionType" required>
+                        <option value="">Seleccionar tipo</option>
+                        <option value="income">Ingreso</option>
+                        <option value="expense">Gasto</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transactionAmount">Cantidad</label>
+                    <input type="number" id="transactionAmount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="transactionCategory">Categoría</label>
+                    <select id="transactionCategory" required>
+                        <option value="">Seleccionar categoría</option>
+                        <option value="food">Alimentación</option>
+                        <option value="transport">Transporte</option>
+                        <option value="entertainment">Entretenimiento</option>
+                        <option value="utilities">Servicios</option>
+                        <option value="salary">Salario</option>
+                        <option value="other">Otros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transactionDescription">Descripción</label>
+                    <input type="text" id="transactionDescription" required>
+                </div>
+                <div class="form-group">
+                    <label for="transactionDate">Fecha</label>
+                    <input type="date" id="transactionDate" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel">Cancelar</button>
+                    <button type="submit" class="btn-submit">Guardar Transacción</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
