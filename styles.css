@@ -1149,6 +1149,30 @@ a:focus-visible {
     font-weight: 600;
 }
 
+/* Schema tables */
+.dimensions-section {
+    margin-top: var(--spacing-8);
+}
+
+.schema-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--spacing-6);
+}
+
+.schema-table th,
+.schema-table td {
+    border: 1px solid var(--border-light);
+    padding: var(--spacing-2) var(--spacing-3);
+    text-align: left;
+}
+
+.schema-table th {
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
 /* Print styles */
 @media print {
     .navbar,
