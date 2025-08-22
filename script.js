@@ -1,6 +1,7 @@
 // Financial Management Application JavaScript
 class FinanceTracker {
     constructor() {
+        this.storageAvailable = true;
         this.transactions = this.loadTransactions();
         this.chart = null;
         this.currentPeriod = 'monthly';
@@ -680,9 +681,15 @@ class FinanceTracker {
     }
 
     loadTransactions() {
-        const stored = localStorage.getItem('financeTracker_transactions');
-        if (stored) {
-            return JSON.parse(stored);
+        try {
+            const stored = localStorage.getItem('financeTracker_transactions');
+            if (stored) {
+                return JSON.parse(stored);
+            }
+        } catch (error) {
+            console.error('Error accediendo a localStorage:', error);
+            this.storageAvailable = false;
+            this.showNotification('Almacenamiento local no disponible. La persistencia se ha deshabilitado.', 'error');
         }
 
         // Default sample transactions with new structure
@@ -755,7 +762,16 @@ class FinanceTracker {
     }
 
     saveTransactions() {
-        localStorage.setItem('financeTracker_transactions', JSON.stringify(this.transactions));
+        if (!this.storageAvailable) {
+            return;
+        }
+        try {
+            localStorage.setItem('financeTracker_transactions', JSON.stringify(this.transactions));
+        } catch (error) {
+            console.error('Error guardando en localStorage:', error);
+            this.storageAvailable = false;
+            this.showNotification('No se pudo guardar en el almacenamiento local. La persistencia se ha deshabilitado.', 'error');
+        }
     }
 
     setCurrentDate() {
@@ -912,13 +928,43 @@ class FinanceTracker {
 
     formatTransactionDate(dateString) {
         const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', { 
+        return date.toLocaleDateString('es-ES', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
         });
+    }
+
+    sanitizeText(text) {
+        const div = document.createElement('div');
+        div.textContent = typeof text === 'string' ? text : '';
+        return div.textContent;
+    }
+
+    sanitizeTransaction(transaction) {
+        const allowedTypes = ['income', 'expense'];
+        const allowedCategories = ['food', 'transport', 'entertainment', 'utilities', 'salary', 'other'];
+
+        const type = allowedTypes.includes(transaction.type) ? transaction.type : 'expense';
+        const category = allowedCategories.includes(transaction.category) ? transaction.category : 'other';
+        const description = this.sanitizeText(transaction.description);
+
+        const dateObj = new Date(transaction.date);
+        const safeDate = isNaN(dateObj.getTime()) ? new Date() : dateObj;
+
+        const amount = typeof transaction.amount === 'number' && isFinite(transaction.amount)
+            ? transaction.amount
+            : 0;
+
+        return {
+            type,
+            category,
+            description,
+            date: safeDate.toISOString(),
+            amount
+        };
     }
 
     applyTransactionFilters() {
