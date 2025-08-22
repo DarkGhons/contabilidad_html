@@ -49,6 +49,9 @@ class FinanceTracker {
             }
         };
         this.currentLanguage = 'es';
+        const { hostname, port } = window.location;
+        const baseHost = hostname || 'localhost';
+        this.API_BASE = port === '3000' ? '' : `http://${baseHost}:3000`;
         this.loadTransactions().then(() => this.init());
     }
 
@@ -534,7 +537,7 @@ class FinanceTracker {
 
         for (const map of mappings) {
             try {
-                const res = await fetch(map.url);
+                const res = await fetch(`${this.API_BASE}${map.url}`);
                 const data = await res.json();
                 const select = document.getElementById(map.selectId);
                 if (select) {
@@ -584,7 +587,7 @@ class FinanceTracker {
         const transaction = {
             tipo,
             monto,
-            cuenta_id: document.getElementById('cuentaId').value,
+            cuenta_id: document.getElementById('cuentaId').value || null,
             categoria_id: categoria,
             descripcion,
             fecha,
@@ -622,11 +625,6 @@ class FinanceTracker {
 
         if (!transaction.monto || transaction.monto <= 0) {
             this.showFieldError('transactionAmount', 'Ingresa una cantidad válida');
-            isValid = false;
-        }
-
-        if (!transaction.cuenta_id) {
-            this.showFieldError('cuentaId', 'Selecciona una cuenta');
             isValid = false;
         }
 
@@ -730,7 +728,7 @@ class FinanceTracker {
 
     async loadTransactions() {
         try {
-            const res = await fetch('/movimientos');
+            const res = await fetch(`${this.API_BASE}/movimientos`);
             if (!res.ok) throw new Error('Network response was not ok');
             this.transactions = await res.json();
         } catch (error) {
@@ -741,7 +739,7 @@ class FinanceTracker {
 
     async saveTransaction(transaction) {
         try {
-            const res = await fetch('/movimientos', {
+            const res = await fetch(`${this.API_BASE}/movimientos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(transaction)
