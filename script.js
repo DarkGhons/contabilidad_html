@@ -443,22 +443,49 @@ class FinanceTracker {
         if (!transactionsList) return;
 
         const recentTransactions = this.transactions.slice(0, 3);
-        
-        transactionsList.innerHTML = recentTransactions.map(transaction => `
-            <div class="transaction-item">
-                <div class="transaction-icon ${transaction.type}">
-                    <i class="fas ${this.getTransactionIcon(transaction.category)}"></i>
-                </div>
-                <div class="transaction-details">
-                    <span class="transaction-title">${transaction.description}</span>
-                    <span class="transaction-category">${this.getCategoryName(transaction.category)}</span>
-                    <span class="transaction-date">${this.formatDate(transaction.date)}</span>
-                </div>
-                <span class="transaction-amount ${transaction.type}">
-                    ${transaction.type === 'income' ? '+' : '-'}€${Math.abs(transaction.amount).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
-                </span>
-            </div>
-        `).join('');
+
+        transactionsList.textContent = '';
+        recentTransactions.forEach(transaction => {
+            const safe = this.sanitizeTransaction(transaction);
+
+            const item = document.createElement('div');
+            item.className = 'transaction-item';
+
+            const iconWrapper = document.createElement('div');
+            iconWrapper.className = `transaction-icon ${safe.type}`;
+            const icon = document.createElement('i');
+            icon.className = `fas ${this.getTransactionIcon(safe.category)}`;
+            iconWrapper.appendChild(icon);
+
+            const details = document.createElement('div');
+            details.className = 'transaction-details';
+
+            const title = document.createElement('span');
+            title.className = 'transaction-title';
+            title.textContent = safe.description;
+
+            const category = document.createElement('span');
+            category.className = 'transaction-category';
+            category.textContent = this.getCategoryName(safe.category);
+
+            const date = document.createElement('span');
+            date.className = 'transaction-date';
+            date.textContent = this.formatDate(safe.date);
+
+            details.appendChild(title);
+            details.appendChild(category);
+            details.appendChild(date);
+
+            const amount = document.createElement('span');
+            amount.className = `transaction-amount ${safe.type}`;
+            amount.textContent = `${safe.type === 'income' ? '+' : '-'}€${Math.abs(safe.amount).toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
+
+            item.appendChild(iconWrapper);
+            item.appendChild(details);
+            item.appendChild(amount);
+
+            transactionsList.appendChild(item);
+        });
     }
 
     getTransactionIcon(category) {
@@ -845,32 +872,89 @@ class FinanceTracker {
         nextPageBtn.disabled = this.currentPage >= totalPages;
 
         // Render transactions
-        allTransactionsList.innerHTML = pageTransactions.map(transaction => `
-            <div class="transaction-item">
-                <div class="transaction-icon ${transaction.type}">
-                    <i class="fas ${this.getTransactionIcon(transaction.category)}"></i>
-                </div>
-                <div class="transaction-details">
-                    <span class="transaction-title">${transaction.description}</span>
-                    <span class="transaction-category">${this.getCategoryName(transaction.category)}</span>
-                    <span class="transaction-date">${this.formatTransactionDate(transaction.date)}</span>
-                </div>
-                <span class="transaction-amount ${transaction.type}">
-                    ${transaction.type === 'income' ? '+' : '-'}€${Math.abs(transaction.amount).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
-                </span>
-            </div>
-        `).join('');
+        allTransactionsList.textContent = '';
+        pageTransactions.forEach(transaction => {
+            const safe = this.sanitizeTransaction(transaction);
+
+            const item = document.createElement('div');
+            item.className = 'transaction-item';
+
+            const iconWrapper = document.createElement('div');
+            iconWrapper.className = `transaction-icon ${safe.type}`;
+            const icon = document.createElement('i');
+            icon.className = `fas ${this.getTransactionIcon(safe.category)}`;
+            iconWrapper.appendChild(icon);
+
+            const details = document.createElement('div');
+            details.className = 'transaction-details';
+
+            const title = document.createElement('span');
+            title.className = 'transaction-title';
+            title.textContent = safe.description;
+
+            const category = document.createElement('span');
+            category.className = 'transaction-category';
+            category.textContent = this.getCategoryName(safe.category);
+
+            const date = document.createElement('span');
+            date.className = 'transaction-date';
+            date.textContent = this.formatTransactionDate(safe.date);
+
+            details.appendChild(title);
+            details.appendChild(category);
+            details.appendChild(date);
+
+            const amount = document.createElement('span');
+            amount.className = `transaction-amount ${safe.type}`;
+            amount.textContent = `${safe.type === 'income' ? '+' : '-'}€${Math.abs(safe.amount).toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
+
+            item.appendChild(iconWrapper);
+            item.appendChild(details);
+            item.appendChild(amount);
+
+            allTransactionsList.appendChild(item);
+        });
     }
 
     formatTransactionDate(dateString) {
         const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', { 
+        return date.toLocaleDateString('es-ES', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
         });
+    }
+
+    sanitizeText(text) {
+        const div = document.createElement('div');
+        div.textContent = typeof text === 'string' ? text : '';
+        return div.textContent;
+    }
+
+    sanitizeTransaction(transaction) {
+        const allowedTypes = ['income', 'expense'];
+        const allowedCategories = ['food', 'transport', 'entertainment', 'utilities', 'salary', 'other'];
+
+        const type = allowedTypes.includes(transaction.type) ? transaction.type : 'expense';
+        const category = allowedCategories.includes(transaction.category) ? transaction.category : 'other';
+        const description = this.sanitizeText(transaction.description);
+
+        const dateObj = new Date(transaction.date);
+        const safeDate = isNaN(dateObj.getTime()) ? new Date() : dateObj;
+
+        const amount = typeof transaction.amount === 'number' && isFinite(transaction.amount)
+            ? transaction.amount
+            : 0;
+
+        return {
+            type,
+            category,
+            description,
+            date: safeDate.toISOString(),
+            amount
+        };
     }
 
     applyTransactionFilters() {
