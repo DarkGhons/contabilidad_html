@@ -19,6 +19,7 @@ const entities = {
 
 const select = document.getElementById('dimensionSelect');
 const container = document.getElementById('dimensionContainer');
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
 
 Object.entries(entities).forEach(([key, cfg]) => {
   const opt = document.createElement('option');
@@ -67,7 +68,7 @@ function renderEntity(entity, config) {
     formFields.forEach(f => {
       data[f] = form[f].value;
     });
-    fetch(`/${entity}`, {
+    fetch(`${API_BASE}/${entity}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -121,12 +122,12 @@ function renderTable(entity, config, data) {
 }
 
 function loadData(entity, config) {
-  fetch(`/${entity}`)
+  fetch(`${API_BASE}/${entity}`)
     .then(r => r.json())
     .then(data => renderTable(entity, config, data));
 }
 
 function deleteItem(entity, id, config) {
-  fetch(`/${entity}/${id}`, { method: 'DELETE' })
+  fetch(`${API_BASE}/${entity}/${id}`, { method: 'DELETE' })
     .then(() => loadData(entity, config));
 }
