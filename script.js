@@ -559,7 +559,7 @@ class FinanceTracker {
             fecha,
             mes: fechaObj.getMonth() + 1,
             anio: fechaObj.getFullYear(),
-            contraparte_id: document.getElementById('contrapartesId').value,
+            contraparte_id: document.getElementById('contraparteId').value,
             instrumento_id: document.getElementById('instrumentoId').value,
             moneda: document.getElementById('moneda').value,
             tasa_cambio: parseFloat(document.getElementById('tasaCambio').value),
