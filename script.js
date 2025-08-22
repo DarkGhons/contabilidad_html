@@ -545,34 +545,29 @@ class FinanceTracker {
     }
 
     handleTransactionSubmit() {
-        const tipo = document.getElementById('transactionType').value;
-        const monto = parseFloat(document.getElementById('transactionAmount').value);
-        const categoria = document.getElementById('transactionCategory').value;
-        const descripcion = document.getElementById('transactionDescription').value;
-        const fecha = document.getElementById('transactionDate').value;
-
-        const fechaObj = fecha ? new Date(fecha) : new Date();
+        const form = document.getElementById('transactionForm');
+        const formData = new FormData(form);
 
         const transaction = {
-            mov_id: Date.now(),
-            fecha: fecha,
-            mes: fechaObj.getMonth() + 1,
-            año: fechaObj.getFullYear(),
-            cuenta_id: null,
-            temporal: false,
-            contrapartes_id: null,
-            categoria_id: categoria,
-            instrumento_id: null,
-            descripcion: descripcion,
-            monto: tipo === 'expense' ? -Math.abs(monto) : Math.abs(monto),
-            moneda: 'EUR',
-            tasa_cambio: 1,
-            estado: 'completado',
-            etiquetas: [],
-            referencia: '',
-            creado_en: new Date().toISOString(),
-            actualizado_en: new Date().toISOString()
+            id: Date.now(),
+            type: document.getElementById('transactionType').value,
+            amount: parseFloat(document.getElementById('transactionAmount').value),
+            cuentaId: document.getElementById('cuentaId').value,
+            category: document.getElementById('categoriaId').value,
+            description: document.getElementById('transactionDescription').value,
+            date: document.getElementById('transactionDate').value,
+            contrapartesId: document.getElementById('contrapartesId').value,
+            instrumentoId: document.getElementById('instrumentoId').value,
+            moneda: document.getElementById('moneda').value,
+            tasaCambio: parseFloat(document.getElementById('tasaCambio').value),
+            estado: document.getElementById('estado').value,
+            temporal: document.getElementById('temporal').checked,
+            etiquetas: document.getElementById('etiquetas').value,
+            referencia: document.getElementById('referencia').value
         };
+        transaction.etiquetas = transaction.etiquetas
+            ? transaction.etiquetas.split(',').map(t => t.trim()).filter(Boolean)
+            : [];
 
         if (this.validateTransaction({ tipo, monto, categoria, descripcion, fecha })) {
             this.addTransaction(transaction);
@@ -593,9 +588,14 @@ class FinanceTracker {
             this.showFieldError('transactionAmount', 'Ingresa una cantidad válida');
             isValid = false;
         }
+        
+        if (!transaction.cuentaId) {
+            this.showFieldError('cuentaId', 'Selecciona una cuenta');
+            isValid = false;
+        }
 
-        if (!fields.categoria) {
-            this.showFieldError('transactionCategory', 'Selecciona una categoría');
+        if (!transaction.category) {
+            this.showFieldError('categoriaId', 'Selecciona una categoría');
             isValid = false;
         }
 
@@ -606,6 +606,21 @@ class FinanceTracker {
 
         if (!fields.fecha) {
             this.showFieldError('transactionDate', 'Selecciona una fecha');
+            isValid = false;
+        }
+
+        if (!transaction.moneda) {
+            this.showFieldError('moneda', 'Selecciona una moneda');
+            isValid = false;
+        }
+
+        if (!transaction.tasaCambio || transaction.tasaCambio <= 0) {
+            this.showFieldError('tasaCambio', 'Ingresa una tasa válida');
+            isValid = false;
+        }
+
+        if (!transaction.estado) {
+            this.showFieldError('estado', 'Selecciona un estado');
             isValid = false;
         }
 
